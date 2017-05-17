@@ -1,0 +1,76 @@
+#!/usr/bin/python
+# Version: 1.2
+# Author: bbb31ade7ba4103469003954b0838a96ac40b96cfc7d4c891cd34140d4849fc3
+# Usage: skeema [options] database [database...]
+#   -u <username> specifies the user to use when connecting to mariadb
+#   -p <password> specifies the password to use when connecting to mariadb
+#   -s <socket> specifies the full path to the socket to use when connecting to mariadb
+#   -d prints the database schema md5 sum
+#   -t prints the table schemas and their md5 sum
+#   -e prints the engines for each table
+#   -S prints the size of each table
+#   -D prints the size of the database
+#   -c prints the row count of each table
+#   -F checks foreign keys for a database
+#
+#
+
+import sys
+import operator
+
+from DBToolkit import MariaDB
+from CLIToolkit import CLI
+
+
+cli = CLI.CLI("ups", "dteScDF")
+DATABASE = cli.orphans
+SOCKET   = cli.cliargs["-s"]
+USERNAME = cli.cliargs["-u"]
+PASSWORD = cli.cliargs["-p"]
+
+def main():
+    # for each database print the options specified from CLI
+    for db in DATABASE:
+        maria = MariaDB.MariaDB(username=USERNAME, password=PASSWORD, database=db, socket=SOCKET)
+
+        if "-d" in cli.booleanargs:
+            dict_print(maria.database_sum(), header=("Database", "MD5 Hash"))
+        if "-t" in cli.booleanargs:
+            dict_print(maria.table_sums(), header=("Table", "MD5 Hash"))
+        if "-e" in cli.booleanargs:
+            dict_print(maria.get_table_engines(), header=("Table", "Engine"))
+        if "-S" in cli.booleanargs:
+            dict_print(maria.get_table_sizes(), header=("Table", "Size (MB)"), sort=True)
+        if "-c" in cli.booleanargs:
+            dict_print(maria.get_table_row_size(), header=("Table", "Rows"), sort=True)
+        if "-D" in cli.booleanargs:
+            dict_print(maria.database_size(), header=("Database", "Size (MB)"))
+        if "-F" in cli.booleanargs:
+            for badkey in maria.check_foreign_keys():
+                print("CHILD->PARENT: {0}.{1}->{2}.{3} CHILD_TABLE={4} PARENT_TABLE={5}".format(badkey["TABLE_NAME"], badkey["COLUMN_NAME"], badkey["REFERENCED_TABLE_NAME"], badkey["REFERENCED_COLUMN_NAME"], badkey["CHILD_ID"], badkey["PARENT_ID"]))
+
+# Pretty prints hashes (dictionaries)
+def dict_print(assocarray, width=45, header=("Key", "Value"), sort=False):
+    color = "\033[0;96m"
+    colorreset = "\033[0;39m"
+    strformat = "%-" + str(width) + "s%-" + str(width) + "s"
+
+    print( (color + strformat + colorreset)  % header)
+
+    if sort:
+        data = sorted(assocarray.items(), key=operator.itemgetter(1),reverse=True)
+
+        for item in data:
+            print(strformat % (item[0], item[1]))
+
+    if not sort:
+        for key,val in assocarray.iteritems():
+            print(strformat % (key, val))
+
+    print
+
+def skeema_help():
+    print("callback success!")
+    sys.exit(0)
+
+main()
