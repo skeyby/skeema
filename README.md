@@ -5,7 +5,7 @@ MySQL/MariaDB/Percona data analysis tool.
 AGPLv3
 
 ## Author
-bbb31ade7ba4103469003954b0838a96ac40b96cfc7d4c891cd34140d4849fc3
+8c30ff1057d69a6a6f6dc2212d8ec25196c542acb8620eb4148318a4b10dd131
 
 ## Features
 * Generates unique MD5 sum for a database.
